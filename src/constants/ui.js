@@ -1,0 +1,15 @@
+/**
+ * Gasto Buster — shared UI class tokens.
+ *
+ * Single source of truth for cross-component interaction styling so every
+ * interactive control ships the same keyboard focus treatment (WCAG 2.1
+ * SC 2.4.7 Focus Visible / SC 2.4.11 Focus Not Obscured).
+ */
+
+/**
+ * Keyboard focus ring applied to every button, input, and select.
+ * `focus-visible` keeps the ring off mouse/touch clicks while guaranteeing a
+ * high-contrast (3:1+) indigo ring for keyboard users.
+ */
+export const FOCUS_RING_CLASSES =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';

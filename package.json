@@ -1,0 +1,36 @@
+{
+  "name": "gasto-buster",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Gasto Buster - a responsive, local-first student expense tracker.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "audit": "node scripts/audit.cjs"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.89.0",
+    "recharts": "^2.15.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^30.1.1",
+    "tailwindcss": "^4.0.0",
+    "vite": "^6.0.7",
+    "vitest": "^5.0.2"
+  }
+}
