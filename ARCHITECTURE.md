@@ -1,8 +1,11 @@
 # Gasto Buster — Architecture
 
-> **Phase 5 Status:** ✅ **Completed** — Vitest suite green (74 tests), WCAG 2.1 AA
-> audit passed, code audit clean, production build verified. **Project status:
-> Production-Ready / Deployed.**
+> **Phase 6 Status:** ✅ **Completed** — PWA support (installable manifest,
+> generated 192/512 icons, Workbox precache + runtime caching for full offline
+> use) and GitHub Actions CI (`checkout` → Node 22 → `npm ci` → `npm run audit` →
+> `npm run build`). Tests green (74), audit clean, production build verified with
+> `sw.js` / `workbox-*.js` / `manifest.webmanifest` emitted. **Project status:
+> Production-Ready / PWA-Enabled.**
 > This document is the source of truth for the project. Any AI session or developer
 > should scan this file first after a context reset.
 
@@ -17,7 +20,8 @@
 | **Type** | Responsive Single Page Application (SPA) |
 | **Target Users** | Students tracking allowances, school spending, and daily budgets |
 | **Architecture** | Local-First (no backend required for primary data storage) |
-| **Deployment** | Vercel (static SPA hosting) |
+| **PWA** | Installable offline app (`display: standalone` + Workbox service worker) |
+| **Deployment** | Vercel (static SPA hosting) + GitHub Actions CI |
 
 ### Scope
 
@@ -55,13 +59,15 @@ allowance. All data lives in the browser of the user who entered it.
 | Persistence | **LocalStorage / IndexedDB** | Browser-isolated storage, zero network exposure |
 | Routing | React state / lightweight client router | SPA rewrite handled by `vercel.json` |
 | Testing | **Vitest + Testing Library + jsdom** | Same Vite pipeline as the build; React 18 act-compatible |
+| PWA / Offline | **vite-plugin-pwa (Workbox)** | Build-time only: precache + runtime caching, no SW code in `src/` |
 
-**Package manifest (Phase 5):** see `package.json`
+**Package manifest (Phase 5–6):** see `package.json`
 `react`, `react-dom`, `lucide-react`, `zod`, `recharts`, `react-hook-form`,
 `@hookform/resolvers` +
 dev: `vite`, `@vitejs/plugin-react`, `tailwindcss`, `@tailwindcss/vite`,
-`vitest`, `@testing-library/react`, `@testing-library/jest-dom`,
-`@testing-library/user-event`, `@testing-library/dom`, `jsdom`.
+`vite-plugin-pwa`, `vitest`, `@testing-library/react`,
+`@testing-library/jest-dom`, `@testing-library/user-event`,
+`@testing-library/dom`, `jsdom`.
 
 ---
 
@@ -137,13 +143,16 @@ Security model is **local-first**: the attack surface is the browser, not an API
 ```
 Gasto-Buster/
 ├── ARCHITECTURE.md            # This file — read first
+├── .github/workflows/ci.yml   # CI: audit + build on push/PR to main
 ├── vercel.json                # SPA catch-all rewrite for Vercel
-├── index.html                 # Vite entry document
+├── index.html                 # Vite entry document (theme-color + icon links)
 ├── package.json
-├── vite.config.js             # Production build: manual vendor chunks
+├── vite.config.js             # Production build: manual vendor chunks + PWA
 ├── vitest.config.js           # Test runner: jsdom env + React transform
 ├── vitest.setup.js            # jest-dom matchers, crypto polyfill, storage reset
+├── public/icons/              # PWA icons (generated; copied verbatim to /dist)
 ├── scripts/audit.cjs          # `npm run audit` — console/dead-code gate
+├── scripts/generate-icons.cjs # `npm run generate:icons` — PWA icon source
 ├── dist/                      # Production build output (deployed to Vercel)
 └── src/
     ├── main.jsx               # React root: providers + <App />
@@ -202,10 +211,15 @@ guard → `utils/storage.js` persistence → state re-render.
 - **Testing:** tests colocate next to the module (`*.test.js(x)`), import
   `describe/it/expect` explicitly from `vitest`, and must not use `console.*` or
   default exports (both are rejected by `npm run audit`).
+- **PWA:** the manifest and service worker are configured entirely in
+  `vite.config.js` (`VitePWA`), so `src/` contains **no** SW registration code —
+  the plugin injects `registerSW.js` into the built HTML. Icons are produced by
+  `npm run generate:icons` (`scripts/generate-icons.cjs`); never hand-edit the
+  PNGs. Theme color is declared once in `index.html` and once in the manifest.
 
 ---
 
-## 8. Quality Gates (Phase 5)
+## 8. Quality Gates (Phase 5–6)
 
 Run these before every commit; all must exit 0.
 
@@ -214,7 +228,13 @@ Run these before every commit; all must exit 0.
 | Unit + context tests | `npm run test` | `validation.test.js` (schema coercion, trimming, bad dates, negative amounts), `formatters.test.js` (PHP/USD currency, ISO dates), `ExpenseContext.test.jsx` (CRUD + daily-cap alerts), `ModalA11y.test.jsx` (focus trap, labels, keyboard) |
 | Watch mode | `npm run test:watch` | Local TDD loop |
 | Code audit | `npm run audit` | No `console.log/debug`, no `debugger`, no unused imports, no dead exports/components, no empty catches |
-| Production build | `npm run build` | Clean `/dist` output, hashed assets, manual vendor chunks (react, zod, forms, lucide, recharts), no bundler warnings |
+| Production build | `npm run build` | Clean `/dist` output, hashed assets, manual vendor chunks (react, zod, forms, lucide, recharts), PWA artifacts (`manifest.webmanifest`, `sw.js`, `workbox-*.js`), no bundler warnings |
+
+**Continuous integration (`.github/workflows/ci.yml`):** every push and pull
+request to `main` runs the same gates — `actions/checkout@v4` →
+`actions/setup-node@v4` (Node 22) → `npm ci` → `npm run audit` → `npm run build`.
+No tests in CI yet (add `npm run test` as a sixth step when the suite is
+expanded).
 
 **Vitest setup:** `vitest.config.js` runs specs in `jsdom` with the React plugin
 only (no Tailwind/chunking config). `vitest.setup.js` adds `@testing-library/jest-dom`
@@ -232,8 +252,19 @@ matchers, polyfills `crypto.randomUUID` when jsdom lacks it, and clears
 
 **Deployment (Vercel):** static SPA — `vercel.json` rewrites every path to
 `index.html`; `npm run build` output in `/dist` is the deployable artifact
-(entry + `forms`/`zod`/`lucide`/`vendor` chunks, `CategoryChart` lazy chunk).
-No environment variables, no server functions.
+(entry + `forms`/`zod`/`lucide`/`vendor` chunks, `CategoryChart` lazy chunk)
+plus the PWA artifacts (`manifest.webmanifest`, `sw.js`, `workbox-*.js`,
+`registerSW.js`, `icons/*`). Vercel resolves files before the rewrite, so the
+service worker and manifest are served from disk — never rewritten to
+`index.html`. No environment variables, no server functions.
+
+**Offline behaviour:** the service worker precaches the HTML shell, every hashed
+chunk, CSS and both icons on first load, then serves them from cache. Route
+changes and navigation fall back to the precached `index.html` (denylisted only
+for `sw.js`, `registerSW.js`, `manifest.webmanifest`); other same-origin GETs use
+`StaleWhileRevalidate`. `skipWaiting` + `clientsClaim` are on (`autoUpdate`), so
+a new build takes over on the next reload. With zero external requests in the
+bundle, the whole app works with the network off.
 
 ---
 
@@ -248,5 +279,6 @@ No environment variables, no server functions.
 | Phase 5 | Filterable transaction history + settings page | ✅ Done |
 | Phase 6 | Polish: responsive passes, a11y, empty states, deploy to Vercel | ✅ Done |
 | **Phase 5 QA gate** | Vitest suite (74 tests), WCAG 2.1 AA keyboard/focus audit, `npm run audit` + `npm run build` verification | ✅ Done |
+| **Phase 6 (PWA + CI)** | `vite-plugin-pwa` manifest + Workbox offline caching, generated 192/512 icons, `.github/workflows/ci.yml` (Node 22, `npm ci`, audit, build) | ✅ Done |
 
-**Current status:** Production-Ready / Deployed.
+**Current status:** Production-Ready / PWA-Enabled.
