@@ -8,8 +8,9 @@
 
 /**
  * Keyboard focus ring applied to every button, input, and select.
- * `focus-visible` keeps the ring off mouse/touch clicks while guaranteeing a
- * high-contrast (3:1+) indigo ring for keyboard users.
+ * `.focus-ring` is defined in src/index.css: a solid yellow outline
+ * (12:1+ against the onyx surfaces) plus the --focus-ring glow token.
+ * `focus-visible` keeps the ring off mouse/touch clicks while
+ * guaranteeing a high-contrast indicator for keyboard users.
  */
-export const FOCUS_RING_CLASSES =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950';
+export const FOCUS_RING_CLASSES = 'focus-ring';

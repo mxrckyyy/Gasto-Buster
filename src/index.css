@@ -1,27 +1,126 @@
 @import 'tailwindcss';
 
-@theme {
+/*
+ * Semantic theme layer: maps the tokens defined in styles/tokens.css to
+ * Tailwind utilities so components use names (bg-surface, text-accent,
+ * border-onyx-line …) instead of raw hex. `inline` keeps tokens.css as the
+ * single source of truth — utilities resolve straight to var(--token).
+ *
+ * Shadow naming: tokens are --shadow-1/2/3; the theme exposes them under
+ * Tailwind's native names (sm/md/xl) to avoid a self-referential var cycle.
+ */
+@theme inline {
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  --color-brand-50: #eef2ff;
-  --color-brand-100: #e0e7ff;
-  --color-brand-500: #6366f1;
-  --color-brand-600: #4f46e5;
-  --color-brand-700: #4338ca;
+  /* surfaces */
+  --color-base: var(--bg-base);
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+  --color-inset: var(--bg-inset);
+
+  /* onyx */
+  --color-onyx: var(--onyx);
+  --color-onyx-soft: var(--onyx-soft);
+  --color-onyx-line: var(--onyx-line);
+
+  /* gray text + fills */
+  --color-gray-100: var(--gray-100);
+  --color-gray-300: var(--gray-300);
+  --color-gray-500: var(--gray-500);
+  --color-gray-700: var(--gray-700);
+  --color-gray-900: var(--gray-900);
+
+  /* yellow accent */
+  --color-accent: var(--yellow);
+  --color-accent-hi: var(--yellow-hi);
+  --color-accent-lo: var(--yellow-lo);
+  --color-accent-tint: var(--yellow-tint);
+  --color-on-yellow: var(--on-yellow);
+
+  /* semantic */
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  /* radii */
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+  --radius-full: var(--r-full);
+
+  /* shadows: token 1 → cards, 2 → elevated, 3 → overlays */
+  --shadow-sm: var(--shadow-1);
+  --shadow-md: var(--shadow-2);
+  --shadow-xl: var(--shadow-3);
 }
 
 html {
   -webkit-text-size-adjust: 100%;
   /* Dark app: render native controls (date pickers, selects) dark too. */
   color-scheme: dark;
+  background-color: var(--bg-base);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
-  @apply bg-slate-950 text-slate-100 antialiased;
+  background-color: var(--bg-base);
+  color: var(--gray-100);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Keep chart tooltips and dense tables readable on small screens. */
 * {
   min-width: 0;
+}
+
+/*
+ * Shared keyboard focus treatment (WCAG 2.1 AA / SC 2.4.7).
+ * Solid yellow outline carries the 3:1 non-text contrast; the token glow
+ * adds a soft halo. Applied via FOCUS_RING_CLASSES (constants/ui.js).
+ */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 2px;
+  box-shadow: var(--focus-ring);
+}
+
+/*
+ * Motion — only applied when usePrefersReducedMotion() reports motion is
+ * OK (see PageShell), so reduced-motion users get instant state changes.
+ */
+.app-shell-motion {
+  transition: grid-template-columns 200ms ease-out;
+}
+
+.drawer-enter {
+  animation: gb-drawer-in 220ms ease-out both;
+}
+
+.scrim-enter {
+  animation: gb-fade-in 220ms ease-out both;
+}
+
+@keyframes gb-drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes gb-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
