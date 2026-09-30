@@ -70,7 +70,7 @@ export default function CategoryChart() {
   if (data.length === 0) {
     return (
       <Card pad={6} className="flex flex-col items-center justify-center text-center">
-        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-onyx-line">
+        <div className="mb-[var(--space-4)] flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-onyx-line">
           <PieChartIcon className="h-9 w-9 text-gray-700" aria-hidden="true" />
         </div>
         <p className="text-sm font-medium text-gray-300">No expense data yet</p>
@@ -130,7 +130,7 @@ export default function CategoryChart() {
         </div>
 
         {/* Legend */}
-        <ul className="w-full flex-1 space-y-2">
+        <ul className="flex w-full flex-1 flex-col gap-[var(--space-2)]">
           {data.map((entry) => (
             <li
               key={entry.id}

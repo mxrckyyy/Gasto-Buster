@@ -122,7 +122,7 @@ export default function Header({
 
       {/* Daily Budget Progress Bar */}
       <div className="border-t border-onyx-line bg-surface px-[var(--gutter)] py-[var(--space-2)]">
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-[var(--space-3)]">
           <span className="shrink-0 text-xs font-medium uppercase tracking-wide text-gray-500">
             Today
           </span>

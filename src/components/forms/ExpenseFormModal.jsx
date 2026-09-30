@@ -155,7 +155,7 @@ export function CategorySelect({ id, value, options, onChange, invalid = false }
                   aria-selected={isSelected}
                   onClick={() => selectOption(option.id)}
                   className={cn(
-                    `flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-onyx-soft ${FOCUS_RING_CLASSES}`,
+                    `flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-onyx-soft ${FOCUS_RING_CLASSES}`,
                     isSelected ? 'text-gray-100' : 'text-gray-300'
                   )}
                 >
@@ -352,7 +352,7 @@ export default function ExpenseFormModal({ isOpen, onClose, editExpense = null }
                   onClick={() => handleTypeChange(type)}
                   aria-pressed={isActive}
                   className={cn(
-                    `flex-1 rounded-lg border px-3 py-2.5 text-sm font-medium transition ${FOCUS_RING_CLASSES}`,
+                    `flex min-h-11 flex-1 items-center justify-center rounded-lg border px-3 py-2.5 text-sm font-medium transition ${FOCUS_RING_CLASSES}`,
                     isActive
                       ? activeClass
                       : 'border-onyx-line bg-inset text-gray-300 hover:bg-onyx-soft'

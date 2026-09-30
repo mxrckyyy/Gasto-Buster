@@ -67,7 +67,7 @@ export default function Sheet({
         if (event.target === event.currentTarget) onClose();
       }}
       className={cn(
-        'fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-0 md:p-4',
+        'fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-0 md:p-[var(--space-4)]',
         className
       )}
     >

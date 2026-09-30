@@ -32,7 +32,7 @@ export default function ChartSkeleton({ rows = 0 }) {
         aria-hidden="true"
         className="invisible flex flex-col items-center justify-center text-center"
       >
-        <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-onyx-line">
+        <div className="mb-[var(--space-4)] flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-onyx-line">
           <PieChartIcon className="h-9 w-9 text-gray-700" />
         </div>
         <p className="text-sm font-medium text-gray-300">No expense data yet</p>
@@ -65,7 +65,7 @@ export default function ChartSkeleton({ rows = 0 }) {
         </div>
 
         {/* Legend placeholders — one row per category */}
-        <ul className="w-full flex-1 space-y-2">
+        <ul className="flex w-full flex-1 flex-col gap-[var(--space-2)]">
           {Array.from({ length: rows }, (_, index) => (
             <li key={index} className={ROW_CLASSES}>
               <span className="flex min-w-0 items-center gap-2">
