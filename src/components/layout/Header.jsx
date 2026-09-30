@@ -1,25 +1,35 @@
 /**
  * Gasto Buster — Header layout component.
  *
- * Branding, a visual daily budget progress indicator (red once the cap is
- * breached), a Settings trigger (opens the Settings modal), and the Reset
- * All Data action with a two-step confirmation.
+ * Branding (mobile/tablet; the sidebar carries it ≥ lg), a hamburger
+ * that opens the navigation drawer (< lg), a visual daily budget
+ * progress indicator (danger once the cap is breached), a Settings
+ * trigger, and the Reset All Data action with a two-step confirmation.
+ * Full-width with fluid --gutter padding; safe-area aware when
+ * installed as a PWA.
  */
 
-import { Wallet, Settings, RotateCcw } from 'lucide-react';
+import { Wallet, Settings, RotateCcw, Menu } from 'lucide-react';
 import useExpenseContext from '../../hooks/useExpenseContext.js';
 import { formatCurrency } from '../../utils/formatters.js';
 import { ALLOWANCE_THRESHOLDS } from '../../constants/categories.js';
 import { FOCUS_RING_CLASSES } from '../../constants/ui.js';
+import Button from '../ui/Button.jsx';
 
 /**
  * @param {{
  *   onOpenSettings: () => void,
  *   onResetData: () => void,
  *   resetPending?: boolean,
+ *   onOpenNav?: () => void,
  * }} props
  */
-export default function Header({ onOpenSettings, onResetData, resetPending = false }) {
+export default function Header({
+  onOpenSettings,
+  onResetData,
+  resetPending = false,
+  onOpenNav,
+}) {
   const { todaySpent, isOverDailyLimit, settings } = useExpenseContext();
   const { currency, locale, dailyAllowance } = settings;
 
@@ -33,80 +43,91 @@ export default function Header({ onOpenSettings, onResetData, resetPending = fal
   const money = (value) => formatCurrency(value, { currency, locale });
 
   const barColor = isOverDailyLimit
-    ? 'bg-red-500'
+    ? 'bg-danger'
     : isWarning
-      ? 'bg-amber-500'
+      ? 'bg-accent'
       : hasCap
-        ? 'bg-emerald-500'
-        : 'bg-slate-600';
+        ? 'bg-success'
+        : 'bg-gray-700';
 
   const labelColor = isOverDailyLimit
-    ? 'text-red-400'
+    ? 'text-danger'
     : isWarning
-      ? 'text-amber-400'
+      ? 'text-accent'
       : hasCap
-        ? 'text-emerald-400'
-        : 'text-slate-400';
+        ? 'text-success'
+        : 'text-gray-500';
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/95 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        {/* Brand */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white">
+    <header className="sticky top-0 z-40 border-b border-onyx-line bg-base/95 pt-[env(safe-area-inset-top)] backdrop-blur">
+      <div className="flex items-center justify-between gap-[var(--space-3)] px-[var(--gutter)] py-[var(--space-3)]">
+        {/* Drawer toggle (< lg) */}
+        {onOpenNav && (
+          <button
+            type="button"
+            onClick={onOpenNav}
+            aria-label="Open navigation menu"
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-gray-300 transition hover:bg-onyx-soft hover:text-gray-100 lg:hidden ${FOCUS_RING_CLASSES}`}
+          >
+            <Menu className="h-5 w-5" aria-hidden="true" />
+          </button>
+        )}
+
+        {/* Brand (< lg) / page label (≥ lg, brand lives in the sidebar) */}
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent text-on-yellow lg:hidden">
             <Wallet className="h-5 w-5" aria-hidden="true" />
           </div>
-          <div className="min-w-0">
-            <h1 className="text-lg font-bold leading-tight text-white">
+          <div className="min-w-0 lg:hidden">
+            <h1 className="text-lg font-bold leading-tight text-gray-100">
               Gasto Buster
             </h1>
-            <p className="text-xs text-slate-400">Student Expense Tracker</p>
+            <p className="text-xs text-gray-500">Student Expense Tracker</p>
           </div>
+          <p className="hidden text-sm font-semibold text-gray-300 lg:block">
+            Dashboard
+          </p>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={onOpenSettings}
             aria-haspopup="dialog"
             aria-label="Open settings"
-            className={`inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white ${FOCUS_RING_CLASSES}`}
           >
             <Settings className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Settings</span>
-          </button>
+          </Button>
 
-          <button
-            type="button"
+          <Button
+            variant={resetPending ? 'danger-solid' : 'danger'}
+            size="sm"
             onClick={onResetData}
             aria-label={
               resetPending
                 ? 'Confirm resetting all data'
                 : 'Reset all data. Requires a second press to confirm.'
             }
-            className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${FOCUS_RING_CLASSES} ${
-              resetPending
-                ? 'border-red-500 bg-red-600 text-white hover:bg-red-500'
-                : 'border-red-900/50 bg-red-950/50 text-red-400 hover:bg-red-950 hover:text-red-300'
-            }`}
           >
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">
               {resetPending ? 'Confirm reset?' : 'Reset All Data'}
             </span>
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Daily Budget Progress Bar */}
-      <div className="border-t border-slate-800 bg-slate-900 px-4 py-2.5 sm:px-6">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 sm:gap-4">
-          <span className="shrink-0 text-xs font-medium uppercase tracking-wide text-slate-400">
+      <div className="border-t border-onyx-line bg-surface px-[var(--gutter)] py-[var(--space-2)]">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <span className="shrink-0 text-xs font-medium uppercase tracking-wide text-gray-500">
             Today
           </span>
           <div
-            className="relative h-2 flex-1 overflow-hidden rounded-full bg-slate-800"
+            className="relative h-2 flex-1 overflow-hidden rounded-full bg-onyx-soft"
             role="progressbar"
             aria-label="Daily budget used"
             aria-valuemin={0}
@@ -135,7 +156,7 @@ export default function Header({ onOpenSettings, onResetData, resetPending = fal
             ) : (
               <>
                 {money(todaySpent)}
-                <span className="ml-1 font-normal text-slate-500">
+                <span className="ml-1 font-normal text-gray-500">
                   · no cap set
                 </span>
               </>
