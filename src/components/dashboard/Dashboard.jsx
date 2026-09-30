@@ -10,6 +10,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import Header from '../layout/Header.jsx';
+import Sidebar from '../layout/Sidebar.jsx';
 import BudgetBanner from './BudgetBanner.jsx';
 import SummaryCards from './SummaryCards.jsx';
 import ChartSkeleton from '../common/ChartSkeleton.jsx';
@@ -113,13 +114,23 @@ export default function Dashboard() {
 
   return (
     <PageShell
-      header={
+      header={({ openNav }) => (
         <Header
+          onOpenNav={openNav}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onResetData={handleResetData}
           resetPending={resetPending}
         />
-      }
+      )}
+      sidebar={({ collapsed, toggle, closeNav }) => (
+        <Sidebar
+          collapsed={collapsed}
+          onToggle={toggle}
+          onCloseNav={closeNav}
+          onAddExpense={openAddModal}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+        />
+      )}
     >
       {/* Daily allowance status */}
       <BudgetBanner onOpenSettings={() => setIsSettingsOpen(true)} />
@@ -139,15 +150,21 @@ export default function Dashboard() {
       </Stack>
 
       {/* Summary cards */}
-      <SummaryCards />
+      <div id="summary-cards" className="scroll-mt-28">
+        <SummaryCards />
+      </div>
 
       {/* Category donut chart (lazy chunk; skeleton reserves its layout) */}
-      <Suspense fallback={<ChartSkeleton rows={chartRowCount} />}>
-        <CategoryChart />
-      </Suspense>
+      <div id="spending-category" className="scroll-mt-28">
+        <Suspense fallback={<ChartSkeleton rows={chartRowCount} />}>
+          <CategoryChart />
+        </Suspense>
+      </div>
 
       {/* Searchable / sortable transaction history */}
-      <TransactionList onEdit={openEditModal} />
+      <div id="transaction-history" className="scroll-mt-28">
+        <TransactionList onEdit={openEditModal} />
+      </div>
 
       {/* Add / Edit modal */}
       <ExpenseFormModal
