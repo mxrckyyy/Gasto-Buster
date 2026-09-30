@@ -2,10 +2,10 @@
  * Gasto Buster — BudgetBanner component.
  *
  * Daily allowance status banner rendered at the top of the dashboard:
- *   - Safe (0%–79%):   emerald theme, "Within daily allowance"
- *   - Warning (80%–99%): amber theme, "Nearing daily allowance cap"
- *   - Exceeded (100%+):  red theme,   "Daily allowance exceeded!"
- *   - No cap configured: neutral slate theme with a Settings shortcut.
+ *   - Safe (0%–79%):    success theme, "Within daily allowance"
+ *   - Warning (80%–99%): yellow accent theme, "Nearing daily allowance cap"
+ *   - Exceeded (100%+):  danger theme,  "Daily allowance exceeded!"
+ *   - No cap configured: neutral onyx theme with a Settings shortcut.
  */
 
 import {
@@ -17,52 +17,53 @@ import {
 import useExpenseContext from '../../hooks/useExpenseContext.js';
 import { formatCurrency } from '../../utils/formatters.js';
 import { ALLOWANCE_THRESHOLDS } from '../../constants/categories.js';
-import { FOCUS_RING_CLASSES } from '../../constants/ui.js';
+import Button from '../ui/Button.jsx';
+import Chip from '../ui/Chip.jsx';
 
 const THEMES = {
   safe: {
     Icon: CheckCircle2,
     role: 'status',
     message: 'Within daily allowance',
-    wrapper: 'border-emerald-500/30 bg-emerald-500/10',
-    iconWrap: 'bg-emerald-500/15 text-emerald-400',
-    title: 'text-emerald-300',
-    detail: 'text-emerald-400/90',
-    percent: 'text-emerald-300',
-    bar: 'bg-emerald-400',
+    wrapper: 'border-success/30 bg-success/10',
+    iconWrap: 'bg-success/15 text-success',
+    title: 'text-success',
+    detail: 'text-success',
+    chip: 'success',
+    bar: 'bg-success',
   },
   warning: {
     Icon: AlertTriangle,
     role: 'status',
     message: 'Nearing daily allowance cap',
-    wrapper: 'border-amber-500/40 bg-amber-500/10',
-    iconWrap: 'bg-amber-500/15 text-amber-400',
-    title: 'text-amber-300',
-    detail: 'text-amber-400/90',
-    percent: 'text-amber-300',
-    bar: 'bg-amber-400',
+    wrapper: 'border-accent/40 bg-accent/10',
+    iconWrap: 'bg-accent/15 text-accent',
+    title: 'text-accent',
+    detail: 'text-accent',
+    chip: 'accent',
+    bar: 'bg-accent',
   },
   exceeded: {
     Icon: AlertOctagon,
     role: 'alert',
     message: 'Daily allowance exceeded!',
-    wrapper: 'border-red-500/40 bg-red-500/10',
-    iconWrap: 'bg-red-500/15 text-red-400',
-    title: 'text-red-300',
-    detail: 'text-red-400/90',
-    percent: 'text-red-300',
-    bar: 'bg-red-500',
+    wrapper: 'border-danger/40 bg-danger/10',
+    iconWrap: 'bg-danger/15 text-danger',
+    title: 'text-danger',
+    detail: 'text-danger',
+    chip: 'danger',
+    bar: 'bg-danger',
   },
   neutral: {
     Icon: Info,
     role: 'status',
     message: 'Daily allowance not set',
-    wrapper: 'border-slate-700 bg-slate-900',
-    iconWrap: 'bg-slate-800 text-slate-400',
-    title: 'text-slate-200',
-    detail: 'text-slate-400',
-    percent: 'text-slate-300',
-    bar: 'bg-slate-500',
+    wrapper: 'border-onyx-line bg-inset',
+    iconWrap: 'bg-onyx-soft text-gray-500',
+    title: 'text-gray-100',
+    detail: 'text-gray-500',
+    chip: 'neutral',
+    bar: 'bg-gray-700',
   },
 };
 
@@ -108,7 +109,7 @@ export default function BudgetBanner({ onOpenSettings }) {
   return (
     <section
       role={theme.role}
-      className={`rounded-2xl border p-4 sm:p-5 ${theme.wrapper}`}
+      className={`rounded-2xl border p-[var(--space-4)] ${theme.wrapper}`}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -127,20 +128,12 @@ export default function BudgetBanner({ onOpenSettings }) {
 
         <div className="flex shrink-0 items-center gap-3">
           {hasCap ? (
-            <span
-              className={`text-sm font-bold tabular-nums ${theme.percent}`}
-            >
-              {percentUsed}% used
-            </span>
+            <Chip tone={theme.chip}>{percentUsed}% used</Chip>
           ) : (
             onOpenSettings && (
-              <button
-                type="button"
-                onClick={onOpenSettings}
-                className={`rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white ${FOCUS_RING_CLASSES}`}
-              >
+              <Button variant="secondary" size="sm" onClick={onOpenSettings}>
                 Open Settings
-              </button>
+              </Button>
             )
           )}
         </div>
@@ -148,7 +141,7 @@ export default function BudgetBanner({ onOpenSettings }) {
 
       {hasCap && (
         <div
-          className="mt-3 h-2 overflow-hidden rounded-full bg-black/20"
+          className="mt-3 h-2 overflow-hidden rounded-full bg-base/60"
           role="progressbar"
           aria-label="Daily allowance used"
           aria-valuemin={0}

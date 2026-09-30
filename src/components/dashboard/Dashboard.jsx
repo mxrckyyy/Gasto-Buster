@@ -17,7 +17,9 @@ import TransactionList from './TransactionList.jsx';
 import ExpenseFormModal from '../forms/ExpenseFormModal.jsx';
 import SettingsModal from '../forms/SettingsModal.jsx';
 import useExpenseContext from '../../hooks/useExpenseContext.js';
-import { FOCUS_RING_CLASSES } from '../../constants/ui.js';
+import PageShell from '../ui/PageShell.jsx';
+import Button from '../ui/Button.jsx';
+import Stack from '../ui/Stack.jsx';
 
 // Code-split Recharts: only reachable through this lazy boundary, so the
 // chart library loads in parallel instead of blocking the entry bundle.
@@ -110,44 +112,42 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <Header
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        onResetData={handleResetData}
-        resetPending={resetPending}
-      />
+    <PageShell
+      header={
+        <Header
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onResetData={handleResetData}
+          resetPending={resetPending}
+        />
+      }
+    >
+      {/* Daily allowance status */}
+      <BudgetBanner onOpenSettings={() => setIsSettingsOpen(true)} />
 
-      <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6">
-        {/* Daily allowance status */}
-        <BudgetBanner onOpenSettings={() => setIsSettingsOpen(true)} />
+      {/* Add Transaction trigger */}
+      <Stack gap="3" row className="justify-end">
+        <Button
+          onClick={openAddModal}
+          title="Add transaction (keyboard shortcut: N)"
+        >
+          <Plus className="h-5 w-5" aria-hidden="true" />
+          Add Transaction
+          <kbd className="hidden rounded border border-on-yellow/30 bg-on-yellow/10 px-1.5 py-0.5 text-[10px] font-semibold text-on-yellow sm:inline">
+            N
+          </kbd>
+        </Button>
+      </Stack>
 
-        {/* Add Transaction trigger */}
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={openAddModal}
-            title="Add transaction (keyboard shortcut: N)"
-            className={`inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 ${FOCUS_RING_CLASSES}`}
-          >
-            <Plus className="h-5 w-5" aria-hidden="true" />
-            Add Transaction
-            <kbd className="ml-1 hidden rounded border border-indigo-400/40 bg-indigo-500/20 px-1.5 py-0.5 text-[10px] font-medium text-indigo-200 sm:inline">
-              N
-            </kbd>
-          </button>
-        </div>
+      {/* Summary cards */}
+      <SummaryCards />
 
-        {/* Summary cards */}
-        <SummaryCards />
+      {/* Category donut chart (lazy chunk; skeleton reserves its layout) */}
+      <Suspense fallback={<ChartSkeleton rows={chartRowCount} />}>
+        <CategoryChart />
+      </Suspense>
 
-        {/* Category donut chart (lazy chunk; skeleton reserves its layout) */}
-        <Suspense fallback={<ChartSkeleton rows={chartRowCount} />}>
-          <CategoryChart />
-        </Suspense>
-
-        {/* Searchable / sortable transaction history */}
-        <TransactionList onEdit={openEditModal} />
-      </main>
+      {/* Searchable / sortable transaction history */}
+      <TransactionList onEdit={openEditModal} />
 
       {/* Add / Edit modal */}
       <ExpenseFormModal
@@ -161,6 +161,6 @@ export default function Dashboard() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
       />
-    </div>
+    </PageShell>
   );
 }

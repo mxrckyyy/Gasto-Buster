@@ -92,6 +92,15 @@ body {
 }
 
 /*
+ * Invalid form controls: driven by the existing aria-invalid attribute
+ * (set by react-hook-form call sites). Unlayered, so it deterministically
+ * wins over the utility border colors instead of racing them.
+ */
+[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+/*
  * Motion — only applied when usePrefersReducedMotion() reports motion is
  * OK (see PageShell), so reduced-motion users get instant state changes.
  */
