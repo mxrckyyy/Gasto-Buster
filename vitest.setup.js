@@ -14,6 +14,26 @@ if (typeof globalThis.crypto?.randomUUID !== 'function') {
   });
 }
 
+/**
+ * jsdom does not implement `ResizeObserver` (Recharts' ResponsiveContainer
+ * needs it) — a no-op class keeps chart mounts quiet in tests.
+ */
+if (typeof globalThis.ResizeObserver !== 'function') {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}
+
+/**
+ * jsdom does not implement `Element.prototype.scrollIntoView` (the Sidebar
+ * uses it after a view swap) — a vi.fn lets tests assert the scroll too.
+ */
+if (typeof Element.prototype.scrollIntoView !== 'function') {
+  Element.prototype.scrollIntoView = vi.fn();
+}
+
 /** Fresh, isolated browser storage for every test. */
 beforeEach(() => {
   window.localStorage.clear();

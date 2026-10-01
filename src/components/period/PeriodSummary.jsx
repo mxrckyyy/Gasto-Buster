@@ -48,7 +48,7 @@ export default function PeriodSummary({ spent, delta, type, currency, locale }) 
     percent === null ? '—' : `${percent > 0 ? '+' : ''}${formatPercent(percent, { locale })}`;
 
   return (
-    <Card pad={4}>
+    <Card as="section" pad={4}>
       <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
         Total spent
       </p>
