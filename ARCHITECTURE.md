@@ -83,6 +83,10 @@ dev: `vite`, `@vitejs/plugin-react`, `tailwindcss`, `@tailwindcss/vite`,
    selected day; warning (80%) and breach (100%) states surfaced as alerts/badges.
 5. **Filterable transaction history** — filter by text, category, type
    (`expense`/`income`), date range; sort by date or amount.
+6. **Weekly / monthly period view + CSV export** — in-place Reports view with a
+   Week/Month switcher, prev/next/Today navigation, period totals vs the previous
+   equivalent period, and offline CSV downloads (this period or all data).
+   See §6 → *Period view + Export*.
 
 ---
 
@@ -149,23 +153,25 @@ Gasto-Buster/
 ├── package.json
 ├── vite.config.js             # Production build: manual vendor chunks + PWA
 ├── vitest.config.js           # Test runner: jsdom env + React transform
-├── vitest.setup.js            # jest-dom matchers, crypto polyfill, storage reset
+├── vitest.setup.js            # jest-dom matchers, crypto + jsdom polyfills, storage reset
 ├── public/icons/              # PWA icons (generated; copied verbatim to /dist)
 ├── scripts/audit.cjs          # `npm run audit` — console/dead-code gate
 ├── scripts/generate-icons.cjs # `npm run generate:icons` — PWA icon source
 ├── dist/                      # Production build output (deployed to Vercel)
 └── src/
     ├── main.jsx               # React root: providers + <App />
-    ├── App.jsx                # App shell, routing/screen switching
+    ├── App.jsx                # App shell: view swap, modals, keyboard shortcut
     ├── index.css              # Tailwind entry + design tokens
     ├── assets/                # Static media (logo, empty-state art)
     ├── components/
     │   ├── common/            # Reusable UI: Button, Input, Card, Modal, Badge
     │   ├── dashboard/         # Summary cards, donut chart, budget indicators
     │   ├── forms/             # Add/Edit expense form + field components
-    │   └── layout/            # Navbar, Sidebar, Header, Footer
+    │   ├── layout/            # Navbar, Sidebar, Header, Footer
+    │   └── period/            # Reports view: switcher, navigator, summary, export menu
     ├── context/               # React Context: ExpenseProvider + *.test.jsx
-    ├── hooks/                 # useLocalStorage, useExpenses, useFocusTrap, …
+    ├── hooks/                 # useLocalStorage, useExpenses, useFocusTrap, usePeriod, …
+    ├── lib/                   # Pure JS modules: periods.js (date math), export.js (CSV)
     ├── utils/                 # formatters.js, validation.js, exportCsv.js (+ tests)
     ├── constants/             # categories.js (data) + ui.js (shared class tokens)
     └── types/                 # (optional) JSDoc typedefs if we stay on JS
@@ -174,7 +180,8 @@ Gasto-Buster/
 | Folder | Responsibility | Rules |
 | --- | --- | --- |
 | `/src/components` | Presentational + composed UI. | No direct `localStorage` access; receive data/callbacks via props. `common/` must stay generic and reusable. |
-| `/src/hooks` | Reusable stateful logic. | `useLocalStorage` is the **only** hook that touches storage; `useExpenses`/`useSettings` wrap it + Zod. `useFocusTrap` is shared by both dialogs. |
+| `/src/hooks` | Reusable stateful logic. | `useLocalStorage` is the **only** hook that touches storage; `useExpenses`/`useSettings` wrap it + Zod. `useFocusTrap` is shared by both dialogs. `usePeriod` derives the reporting period from storage + context. |
+| `/src/lib` | Pure, framework-free modules. | Date math (`periods.js`) and CSV (`export.js`) — no React imports, no side effects (the download helper aside), unit-tested in `*.test.js`. |
 | `/src/utils` | Pure functions. | No React imports, no side effects — trivially unit-testable. |
 | `/src/context` | Global state providers. | One provider per domain (expenses, settings); exposes CRUD that internally validates with Zod. |
 | `/src/constants` | Static config + shared class tokens. | `categories.js` (categories, types, defaults); `ui.js` (`FOCUS_RING_CLASSES` used by every control). |
@@ -183,6 +190,56 @@ Gasto-Buster/
 
 **Data flow:** `components` → dispatch to `hooks`/`context` → `utils/validation.js`
 guard → `utils/storage.js` persistence → state re-render.
+
+### Period view + Export
+
+**Data flow:** the Sidebar **Reports** item toggles `App.jsx`'s `view` state
+(`'dashboard' ⇄ 'periods'`) — an in-place swap inside the shared `PageShell`
+(no router). `PeriodsView` reads `usePeriod()` (persists `{ type, anchorDate }`
+to `localStorage['gb.period']`, mirroring the `gb.sidebar` UI-state pattern) →
+`lib/periods.js` derives the `DateRange` → `filterExpensesByRange` /
+`sumExpenses` / `groupByCategory` / `computeDelta` feed `PeriodSummary`
+(expense totals only), `CategoryChart` (via its optional `categoryTotals`
+prop) and `TransactionList` (period slice via the `expenses` prop,
+`showExport={false}`) → `ExportMenu` serializes with `lib/export.js` and
+downloads offline.
+
+**Files added**
+
+| File | Responsibility |
+| --- | --- |
+| `src/lib/periods.js` | Pure date math: `getWeekRange` / `getMonthRange` (Mon-start weeks, calendar months, local time), `getPreviousPeriod` / `getNextPeriod`, `filterExpensesByRange` (inclusive), `sumExpenses`, `groupByCategory`, `computeDelta`, `toISOWeek` (`YYYY-Www`) |
+| `src/lib/export.js` | Pure `toCSV` + `buildFilename`; `downloadFile` (Blob + `URL.createObjectURL`, zero network) |
+| `src/hooks/usePeriod.js` | Persisted `{ type: 'week' \| 'month', anchorDate }` + memoized range / filtered list / totals / delta derivations |
+| `src/components/period/*.jsx` | `PeriodSwitcher` (tablist, roving tabindex), `PeriodNavigator` (44×44 prev/next, Today, `aria-live` label), `PeriodSummary`, `PeriodsView` (`#period-panel`), `ExportMenu` (focus-trapped Sheet with exactly two CSV items) |
+| `src/App.test.jsx` | Full-shell wiring tests: view toggle, period controls, seeded-fixture totals, export menu + download, zero-warning render |
+
+Changed for the feature: `App.jsx` (view state + swap), `Sidebar.jsx`
+(Reports item + view-aware section jumps), `Dashboard.jsx` (shell lifted
+out, prop-driven content), `CategoryChart.jsx` (`categoryTotals` prop),
+`TransactionList.jsx` (`expenses` + `showExport` props),
+`utils/formatters.js` (`formatPeriodLabel`), `vitest.setup.js` (jsdom
+`ResizeObserver` + `scrollIntoView` stubs).
+
+**CSV contract** — header row is exactly
+`Date,Category,Description,Amount,Currency,Week,Month`:
+
+| Column | Source |
+| --- | --- |
+| `Date` | `date` (`YYYY-MM-DD`) |
+| `Category` | category **label** (ids never reach the file) |
+| `Description` | `title` |
+| `Amount` | bare 2-decimal number (no symbol/separator → spreadsheets can SUM) |
+| `Currency` | ISO 4217 code from settings (default `PHP`) |
+| `Week` | ISO week, e.g. `2025-W39` |
+| `Month` | `YYYY-MM` |
+
+CRLF line endings; cells quoted only when they contain a comma, quote or
+newline (quotes doubled); rows keep the input order; no BOM. Filenames:
+period → `gasto-buster_<start>_<end>.csv`, all → `gasto-buster_all_<today>.csv`.
+Both exports run fully client-side — no network, no external libs. The
+dashboard's legacy `utils/exportCsv.js` button remains for now; unifying
+the two export schemas is a tracked follow-up (see `FEATURE_NOTES.md`).
 
 ---
 
@@ -225,7 +282,7 @@ Run these before every commit; all must exit 0.
 
 | Gate | Command | Covers |
 | --- | --- | --- |
-| Unit + context tests | `npm run test` | `validation.test.js` (schema coercion, trimming, bad dates, negative amounts), `formatters.test.js` (PHP/USD currency, ISO dates), `ExpenseContext.test.jsx` (CRUD + daily-cap alerts), `ModalA11y.test.jsx` (focus trap, labels, keyboard) |
+| Unit + context tests | `npm run test` | `validation.test.js` (schema coercion, trimming, bad dates, negative amounts), `formatters.test.js` (PHP/USD currency, ISO dates), `ExpenseContext.test.jsx` (CRUD + daily-cap alerts), `ModalA11y.test.jsx` (focus trap, labels, keyboard), `periods.test.js` / `export.test.js` (period math + CSV), `App.test.jsx` (full-shell wiring) |
 | Watch mode | `npm run test:watch` | Local TDD loop |
 | Code audit | `npm run audit` | No `console.log/debug`, no `debugger`, no unused imports, no dead exports/components, no empty catches |
 | Production build | `npm run build` | Clean `/dist` output, hashed assets, manual vendor chunks (react, zod, forms, lucide, recharts), PWA artifacts (`manifest.webmanifest`, `sw.js`, `workbox-*.js`), no bundler warnings |
@@ -238,7 +295,8 @@ expanded).
 
 **Vitest setup:** `vitest.config.js` runs specs in `jsdom` with the React plugin
 only (no Tailwind/chunking config). `vitest.setup.js` adds `@testing-library/jest-dom`
-matchers, polyfills `crypto.randomUUID` when jsdom lacks it, and clears
+matchers, polyfills `crypto.randomUUID` when jsdom lacks it, stubs `ResizeObserver`
+(Recharts) + `Element.prototype.scrollIntoView` for jsdom, and clears
 `localStorage`/`sessionStorage` before every test.
 
 **Test coverage map**
@@ -249,6 +307,9 @@ matchers, polyfills `crypto.randomUUID` when jsdom lacks it, and clears
 | `src/utils/formatters.test.js` | `formatCurrency` (PHP default, USD override, compact, symbol fallback), `formatSignedCurrency`, `parseDate`/`toISODate`/`getTodayISO`, `formatDate`/`formatFriendlyDate`, `formatPercent` |
 | `src/context/ExpenseContext.test.jsx` | `addExpense`/`updateExpense`/`deleteExpense` state transitions + persistence, derived metrics, `dailyAllowance` warning/breach alerts (0 = unlimited), `updateSettings`/`clearAllData` |
 | `src/components/forms/ModalA11y.test.jsx` | WCAG keyboard contract: labels, autofocus, Tab trap, Escape layering, focus restore, Enter-to-submit |
+| `src/lib/periods.test.js` | Mon–Sun week ranges (Sunday → previous Monday), calendar months incl. Feb leap/non-leap + 28/30/31-day cases, prev/next navigation across year boundaries, inclusive range filtering, sums/grouping, `computeDelta` (null percent on no baseline), ISO-week boundary cases |
+| `src/lib/export.test.js` | Exact 7-column header + order, CRLF endings, comma/quote/newline escaping with doubled quotes, category labels (never ids), bare 2-decimal amounts, ISO week/`YYYY-MM` month cells, filename patterns, `downloadFile` object-URL lifecycle |
+| `src/App.test.jsx` | Shell wiring: Sidebar Reports swap both ways (+ delayed `scrollIntoView`), Week/Month tabs with `aria-live` labels and prev/next/Today, seeded-fixture period totals ("—" with no baseline), export menu contract (exactly two CSV items, Esc + focus restore), offline download announcement, zero `console.error` |
 
 **Deployment (Vercel):** static SPA — `vercel.json` rewrites every path to
 `index.html`; `npm run build` output in `/dist` is the deployable artifact
@@ -280,5 +341,6 @@ bundle, the whole app works with the network off.
 | Phase 6 | Polish: responsive passes, a11y, empty states, deploy to Vercel | ✅ Done |
 | **Phase 5 QA gate** | Vitest suite (74 tests), WCAG 2.1 AA keyboard/focus audit, `npm run audit` + `npm run build` verification | ✅ Done |
 | **Phase 6 (PWA + CI)** | `vite-plugin-pwa` manifest + Workbox offline caching, generated 192/512 icons, `.github/workflows/ci.yml` (Node 22, `npm ci`, audit, build) | ✅ Done |
+| **Period view + CSV export** | Week/Month reports view (`usePeriod`, `lib/periods`, `components/period/`), client-side CSV (`lib/export` + ExportMenu), App shell lift, full-shell tests (133 total) | ✅ Done |
 
 **Current status:** Production-Ready / PWA-Enabled.
