@@ -16,7 +16,7 @@ below for why.
 | `src/components/period/PeriodSummary.jsx` | Total spent + "vs previous week/month ±amount (±%)" card |
 | `src/components/period/PeriodsView.jsx` | The Reports screen: `#period-panel` composing the above + shared chart/list |
 | `src/components/period/ExportMenu.jsx` | Trigger + focus-trapped Sheet with exactly two CSV items + live-region announcement |
-| `src/App.test.jsx` (6 tests) | Full-shell wiring: view swap, controls, fixture totals, export menu/download, zero-warning render |
+| `src/App.test.jsx` (7 tests) | Full-shell wiring: view swap, controls (incl. tablist arrow keys), fixture totals, export menu/download, zero-warning render |
 
 ## Files changed
 
@@ -122,8 +122,8 @@ React (JSX) only**, so before redoing the work:
 ## Verification
 
 - `npm run audit` — clean.
-- `npm test` — **133 passing** (74 pre-existing + 59 new: 30 periods,
-  19 export, 4 formatters, 6 full-shell).
+- `npm test` — **134 passing** (74 pre-existing + 60 new: 30 periods,
+  19 export, 4 formatters, 7 full-shell).
 - `npm run build` — succeeds; PWA assets emitted (`sw.js`, `workbox-*.js`,
   `manifest.webmanifest`).
 - No `.ts`/`.tsx` files, no `tsconfig.json`, no TS dependencies.

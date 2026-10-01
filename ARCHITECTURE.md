@@ -341,6 +341,6 @@ bundle, the whole app works with the network off.
 | Phase 6 | Polish: responsive passes, a11y, empty states, deploy to Vercel | ✅ Done |
 | **Phase 5 QA gate** | Vitest suite (74 tests), WCAG 2.1 AA keyboard/focus audit, `npm run audit` + `npm run build` verification | ✅ Done |
 | **Phase 6 (PWA + CI)** | `vite-plugin-pwa` manifest + Workbox offline caching, generated 192/512 icons, `.github/workflows/ci.yml` (Node 22, `npm ci`, audit, build) | ✅ Done |
-| **Period view + CSV export** | Week/Month reports view (`usePeriod`, `lib/periods`, `components/period/`), client-side CSV (`lib/export` + ExportMenu), App shell lift, full-shell tests (133 total) | ✅ Done |
+| **Period view + CSV export** | Week/Month reports view (`usePeriod`, `lib/periods`, `components/period/`), client-side CSV (`lib/export` + ExportMenu), App shell lift, full-shell tests (134 total) | ✅ Done |
 
 **Current status:** Production-Ready / PWA-Enabled.

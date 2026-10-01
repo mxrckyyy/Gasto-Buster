@@ -110,6 +110,10 @@ describe('App — view toggle', () => {
     expect(
       within(main).getByRole('button', { name: /add transaction/i })
     ).toBeInTheDocument();
+    // Dashboard keeps its legacy all-data export button.
+    expect(
+      within(main).getByRole('button', { name: 'Export CSV' })
+    ).toBeInTheDocument();
     await waitFor(() => expect(Element.prototype.scrollIntoView).toHaveBeenCalled());
   });
 });
@@ -154,6 +158,36 @@ describe('Period controls', () => {
     expect(liveLabel).toHaveTextContent(
       formatPeriodLabel(getMonthRange(new Date()), { type: 'month', locale: 'en-PH' })
     );
+  });
+
+  it('moves between tabs with arrow keys (roving tabindex)', async () => {
+    const user = userEvent.setup();
+    renderApp();
+    await user.click(screen.getByRole('button', { name: 'Reports' }));
+    await waitForChart();
+
+    const weekTab = screen.getByRole('tab', { name: 'Week' });
+    const monthTab = screen.getByRole('tab', { name: 'Month' });
+
+    // Only the selected tab is Tab-reachable.
+    expect(weekTab).toHaveAttribute('tabindex', '0');
+    expect(monthTab).toHaveAttribute('tabindex', '-1');
+
+    weekTab.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(monthTab).toHaveAttribute('aria-selected', 'true');
+    expect(monthTab).toHaveFocus();
+    expect(monthTab).toHaveAttribute('tabindex', '0');
+
+    await user.keyboard('{ArrowLeft}');
+    expect(weekTab).toHaveAttribute('aria-selected', 'true');
+    expect(weekTab).toHaveFocus();
+
+    await user.keyboard('{End}');
+    expect(monthTab).toHaveAttribute('aria-selected', 'true');
+
+    await user.keyboard('{Home}');
+    expect(weekTab).toHaveAttribute('aria-selected', 'true');
   });
 
   it('totals, delta, and list reflect only the visible period', async () => {
