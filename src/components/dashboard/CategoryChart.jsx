@@ -45,8 +45,17 @@ function ChartTooltip({ active, payload, settings }) {
   );
 }
 
-export default function CategoryChart() {
-  const { categoryTotals, settings } = useExpenseContext();
+/**
+ * @param {{
+ *   categoryTotals?: { [categoryId: string]: number },
+ * }} props
+ *   `categoryTotals` overrides the context totals so the same chart can
+ *   render a filtered slice (the period view passes its period totals);
+ *   omit it to use the dashboard's all-time totals.
+ */
+export default function CategoryChart({ categoryTotals: totalsOverride }) {
+  const { categoryTotals: contextTotals, settings } = useExpenseContext();
+  const categoryTotals = totalsOverride ?? contextTotals;
   const currencyOpts = { currency: settings.currency, locale: settings.locale };
 
   const data = Object.entries(categoryTotals)

@@ -190,3 +190,32 @@ export function formatPercent(ratio, options = {}) {
     maximumFractionDigits,
   }).format(toFiniteNumber(ratio));
 }
+
+/**
+ * Period label for the reports navigator:
+ *   week  → "Sep 22 – Sep 28, 2025" (en dash; year comes from the end date
+ *           so a week spanning New Year labels correctly)
+ *   month → "September 2025"
+ * Returns '' for a missing/invalid range instead of throwing.
+ *
+ * @param {{ start: Date|string|number, end: Date|string|number }} range
+ * @param {{ type?: 'week'|'month', locale?: string }} [options]
+ * @returns {string}
+ */
+export function formatPeriodLabel(range, options = {}) {
+  const { type = 'week', locale = DEFAULT_LOCALE } = options;
+  const start = parseDate(range?.start);
+  const end = parseDate(range?.end);
+  if (!start || !end) return '';
+
+  try {
+    if (type === 'month') {
+      return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(start);
+    }
+    const dayFormat = new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' });
+    const yearFormat = new Intl.DateTimeFormat(locale, { year: 'numeric' });
+    return `${dayFormat.format(start)} – ${dayFormat.format(end)}, ${yearFormat.format(end)}`;
+  } catch {
+    return toISODate(start);
+  }
+}

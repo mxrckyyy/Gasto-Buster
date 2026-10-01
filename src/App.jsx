@@ -4,8 +4,8 @@
  * Owns the application chrome: PageShell (sidebar rail + mobile drawer),
  * Header, Sidebar, the Add/Edit + Settings modals, the global keyboard
  * shortcut (N / +), and the two-step data-reset confirmation. Main content
- * is the Dashboard view; the period reports view swaps in here later
- * (view state lives in App).
+ * swaps in place between the Dashboard view and the period reports view
+ * (view state lives in App — no router).
  *
  * Global expense state is provided by <ExpenseProvider> in main.jsx.
  */
@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 import Header from './components/layout/Header.jsx';
 import Sidebar from './components/layout/Sidebar.jsx';
 import Dashboard from './components/dashboard/Dashboard.jsx';
+import PeriodsView from './components/period/PeriodsView.jsx';
 import ExpenseFormModal from './components/forms/ExpenseFormModal.jsx';
 import SettingsModal from './components/forms/SettingsModal.jsx';
 import useExpenseContext from './hooks/useExpenseContext.js';
@@ -36,6 +37,8 @@ function isTypingTarget(target) {
 export default function App() {
   const { clearAllData } = useExpenseContext();
 
+  // In-place main-content swap (no router): dashboard ⇄ period reports.
+  const [view, setView] = useState('dashboard');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
@@ -121,15 +124,21 @@ export default function App() {
           onCloseNav={closeNav}
           onAddExpense={openAddModal}
           onOpenSettings={() => setIsSettingsOpen(true)}
+          view={view}
+          onNavigate={setView}
         />
       )}
     >
-      {/* Main content view (period reports swap in here later) */}
-      <Dashboard
-        onAddExpense={openAddModal}
-        onEdit={openEditModal}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-      />
+      {/* Main content view: dashboard ⇄ period reports */}
+      {view === 'dashboard' ? (
+        <Dashboard
+          onAddExpense={openAddModal}
+          onEdit={openEditModal}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+        />
+      ) : (
+        <PeriodsView onEdit={openEditModal} />
+      )}
 
       {/* Add / Edit modal */}
       <ExpenseFormModal

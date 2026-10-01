@@ -13,6 +13,7 @@ import {
   formatDate,
   formatFriendlyDate,
   formatPercent,
+  formatPeriodLabel,
   formatSignedCurrency,
   getTodayISO,
   parseDate,
@@ -131,5 +132,34 @@ describe('formatDate / formatFriendlyDate / formatPercent', () => {
     expect(formatPercent(0.4567)).toBe('45.7%');
     expect(formatPercent(1)).toBe('100%');
     expect(formatPercent(Number.NaN)).toBe('0%');
+  });
+});
+
+describe('formatPeriodLabel', () => {
+  it('formats a week range as "Sep 22 – Sep 28, 2025"', () => {
+    expect(
+      formatPeriodLabel({ start: new Date(2025, 8, 22), end: new Date(2025, 8, 28) })
+    ).toBe('Sep 22 – Sep 28, 2025');
+  });
+
+  it('labels a week spanning New Year with the end date year', () => {
+    expect(
+      formatPeriodLabel({ start: new Date(2024, 11, 30), end: new Date(2025, 0, 5) })
+    ).toBe('Dec 30 – Jan 5, 2025');
+  });
+
+  it('formats a month range as "September 2025"', () => {
+    expect(
+      formatPeriodLabel(
+        { start: new Date(2025, 8, 1), end: new Date(2025, 8, 30) },
+        { type: 'month' }
+      )
+    ).toBe('September 2025');
+  });
+
+  it('returns "" for a missing or invalid range instead of throwing', () => {
+    expect(formatPeriodLabel(null)).toBe('');
+    expect(formatPeriodLabel(undefined)).toBe('');
+    expect(formatPeriodLabel({ start: 'nope', end: new Date() })).toBe('');
   });
 });

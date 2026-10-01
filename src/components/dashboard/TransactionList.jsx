@@ -35,10 +35,24 @@ import { cn } from '../../utils/cn.js';
 /**
  * @param {{
  *   onEdit: (expense: object) => void,
+ *   expenses?: object[],
+ *   showExport?: boolean,
  * }} props
+ *   `expenses` overrides the context list (the period view passes its
+ *   period slice); `showExport` hides the legacy all-data export button
+ *   on screens that ship their own Export menu (dashboard keeps it).
  */
-export default function TransactionList({ onEdit }) {
-  const { expenses, deleteExpense, settings } = useExpenseContext();
+export default function TransactionList({
+  onEdit,
+  expenses: expensesOverride,
+  showExport = true,
+}) {
+  const {
+    expenses: contextExpenses,
+    deleteExpense,
+    settings,
+  } = useExpenseContext();
+  const expenses = expensesOverride ?? contextExpenses;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -133,17 +147,20 @@ export default function TransactionList({ onEdit }) {
             {sortOrder === 'newest' ? 'Newest first' : 'Highest amount'}
           </Button>
 
-          {/* Export all records as CSV */}
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => exportToCsv(expenses)}
-            disabled={expenses.length === 0}
-            title="Export all transactions as CSV"
-          >
-            <Download className="h-4 w-4" aria-hidden="true" />
-            Export CSV
-          </Button>
+          {/* Export all records as CSV (dashboard only — the period view
+              ships its own Export menu instead) */}
+          {showExport && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => exportToCsv(expenses)}
+              disabled={expenses.length === 0}
+              title="Export all transactions as CSV"
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              Export CSV
+            </Button>
+          )}
         </div>
       </div>
 

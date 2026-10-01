@@ -9,6 +9,8 @@
  *   quick action → Add Transaction
  *   nav → hash-anchor jump links to the Summary / Spending /
  *          Transaction History sections (existing in-page sections)
+ *          + a Reports item that swaps App's main view to the
+ *          period reports screen (a view swap, not a route)
  *   stats → total spent, net balance, today vs cap (expanded only)
  *   footer → Settings + collapse toggle (rail only) / nothing in drawer
  *
@@ -24,6 +26,7 @@ import {
   LayoutDashboard,
   PieChart,
   Receipt,
+  BarChart3,
   Plus,
   Settings,
   ChevronLeft,
@@ -47,6 +50,18 @@ const NAV_ITEMS = [
   },
 ];
 
+/** Shared class contract for every nav row (anchor or button). */
+const navItemClass = (isActive, isCollapsed) =>
+  cn(
+    `flex min-h-11 items-center gap-[var(--space-2)] rounded-md px-3 text-sm font-medium transition ${FOCUS_RING_CLASSES}`,
+    isCollapsed ? 'justify-center px-0' : 'border-l-2',
+    isActive
+      ? isCollapsed
+        ? 'bg-accent/10 text-accent'
+        : 'border-accent bg-accent/10 text-accent'
+      : 'border-transparent text-gray-300 hover:bg-onyx-soft hover:text-gray-100'
+  );
+
 /**
  * @param {{
  *   collapsed: boolean,
@@ -54,6 +69,8 @@ const NAV_ITEMS = [
  *   onCloseNav: (() => void) | null,
  *   onAddExpense: () => void,
  *   onOpenSettings: () => void,
+ *   view?: 'dashboard' | 'periods',
+ *   onNavigate?: (view: 'dashboard' | 'periods') => void,
  * }} props
  */
 export default function Sidebar({
@@ -62,6 +79,8 @@ export default function Sidebar({
   onCloseNav,
   onAddExpense,
   onOpenSettings,
+  view = 'dashboard',
+  onNavigate,
 }) {
   const { totalExpense, netBalance, todaySpent, settings } = useExpenseContext();
   const [activeId, setActiveId] = useState('summary');
@@ -70,9 +89,22 @@ export default function Sidebar({
   const money = (value) => formatCurrency(value, currencyOpts);
   const cap = Number(settings.dailyAllowance) || 0;
 
-  const handleNavClick = (id) => {
-    setActiveId(id);
+  const handleNavClick = (item, event) => {
+    setActiveId(item.id);
     onCloseNav?.();
+    // Section jumps only exist on the dashboard: swap views first, then scroll.
+    if (view !== 'dashboard') {
+      event.preventDefault();
+      onNavigate?.('dashboard');
+      const targetId = item.href.slice(1);
+      requestAnimationFrame(() => document.getElementById(targetId)?.scrollIntoView());
+    }
+  };
+
+  const handleReports = () => {
+    setActiveId('reports');
+    onCloseNav?.();
+    onNavigate?.('periods');
   };
 
   const handleAdd = () => {
@@ -155,22 +187,27 @@ export default function Sidebar({
               title={collapsed ? item.label : undefined}
               aria-label={collapsed ? item.label : undefined}
               aria-current={isActive ? 'true' : undefined}
-              onClick={() => handleNavClick(item.id)}
-              className={cn(
-                `flex min-h-11 items-center gap-[var(--space-2)] rounded-md px-3 text-sm font-medium transition ${FOCUS_RING_CLASSES}`,
-                collapsed ? 'justify-center px-0' : 'border-l-2',
-                isActive
-                  ? collapsed
-                    ? 'bg-accent/10 text-accent'
-                    : 'border-accent bg-accent/10 text-accent'
-                  : 'border-transparent text-gray-300 hover:bg-onyx-soft hover:text-gray-100'
-              )}
+              onClick={(event) => handleNavClick(item, event)}
+              className={navItemClass(isActive, collapsed)}
             >
               <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
               {!collapsed && <span className="truncate">{item.label}</span>}
             </a>
           );
         })}
+
+        {/* Reports — swaps the main view to period reports (a view, not a route) */}
+        <button
+          type="button"
+          onClick={handleReports}
+          title={collapsed ? 'Reports' : undefined}
+          aria-label={collapsed ? 'Reports' : undefined}
+          aria-current={activeId === 'reports' ? 'true' : undefined}
+          className={navItemClass(activeId === 'reports', collapsed)}
+        >
+          <BarChart3 className="h-5 w-5 shrink-0" aria-hidden="true" />
+          {!collapsed && <span className="truncate">Reports</span>}
+        </button>
       </nav>
 
       {/* Overview stats (labels need room — expanded only) */}
