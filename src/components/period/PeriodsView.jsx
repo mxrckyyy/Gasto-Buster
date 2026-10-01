@@ -18,6 +18,7 @@ import { formatPeriodLabel } from '../../utils/formatters.js';
 import PeriodSwitcher from './PeriodSwitcher.jsx';
 import PeriodNavigator from './PeriodNavigator.jsx';
 import PeriodSummary from './PeriodSummary.jsx';
+import ExportMenu from './ExportMenu.jsx';
 
 // Same lazy module the Dashboard uses (one shared chunk).
 const CategoryChart = lazy(() => import('../dashboard/CategoryChart.jsx'));
@@ -54,7 +55,7 @@ export default function PeriodsView({ onEdit }) {
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-semibold text-gray-100">Reports</h2>
-        {/* Export menu is wired in the export step */}
+        <ExportMenu />
       </div>
 
       <PeriodSwitcher type={type} onChange={setType} />
