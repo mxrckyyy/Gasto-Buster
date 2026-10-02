@@ -90,19 +90,38 @@ export default function TransactionList({
 
   return (
     <Card as="section" pad={5}>
-      <div className="mb-[var(--space-4)] flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-            Transaction History
-          </h3>
-          <Chip>
-            {filteredExpenses.length} of {expenses.length}
-          </Chip>
+      <div className="mb-[var(--space-4)] flex flex-col gap-[var(--stack-gap)]">
+        <div className="flex flex-wrap items-center justify-between gap-[var(--space-3)]">
+          <div className="flex min-w-0 items-baseline gap-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+              Transaction History
+            </h3>
+            <Chip className="shrink-0">
+              {filteredExpenses.length} of {expenses.length}
+            </Chip>
+          </div>
+
+          {/* Export all records as CSV (dashboard only — the period view
+              ships its own Export menu instead) */}
+          {showExport && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="ml-auto w-11 sm:w-auto"
+              onClick={() => exportToCsv(expenses)}
+              disabled={expenses.length === 0}
+              aria-label="Export CSV"
+              title="Export all transactions as CSV"
+            >
+              <Download className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="hidden sm:inline">Export CSV</span>
+            </Button>
+          )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-[var(--stack-gap)] sm:flex-row sm:flex-wrap sm:items-center">
           {/* Search by title */}
-          <div className="relative min-w-0 flex-1 sm:flex-none">
+          <div className="relative w-full min-w-0 sm:w-auto">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
               aria-hidden="true"
@@ -122,7 +141,7 @@ export default function TransactionList({
             value={categoryFilter}
             onChange={(event) => setCategoryFilter(event.target.value)}
             aria-label="Filter by category"
-            className={cn(FIELD_CLASSES, 'max-w-[11rem]')}
+            className={cn(FIELD_CLASSES, 'max-w-none sm:max-w-[11rem]')}
           >
             <option value="all">All Categories</option>
             {ALL_CATEGORIES.map((category) => (
@@ -146,21 +165,6 @@ export default function TransactionList({
             <ArrowUpDown className="h-4 w-4" aria-hidden="true" />
             {sortOrder === 'newest' ? 'Newest first' : 'Highest amount'}
           </Button>
-
-          {/* Export all records as CSV (dashboard only — the period view
-              ships its own Export menu instead) */}
-          {showExport && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => exportToCsv(expenses)}
-              disabled={expenses.length === 0}
-              title="Export all transactions as CSV"
-            >
-              <Download className="h-4 w-4" aria-hidden="true" />
-              Export CSV
-            </Button>
-          )}
         </div>
       </div>
 
